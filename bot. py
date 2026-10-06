@@ -1,0 +1,77 @@
+import telebot
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+
+# رمز البوت (API Token) الخاص بمنصة أثر
+TOKEN = '8897254274:AAGi156yg-T78bLULj0s1NHYYyh658Dao6U'
+bot = telebot.TeleBot(TOKEN)
+
+# قاعدة بيانات مؤقتة لتخزين بيانات المستخدمين
+user_data = {}
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    chat_id = message.chat.id
+    user_data[chat_id] = {}
+    bot.send_message(chat_id, "أهلاً بك في منصة أثر المباركة. يرجى إدخال اسمك الكامل:")
+    bot.register_next_step_handler(message, get_name)
+
+def get_name(message):
+    chat_id = message.chat.id
+    user_data[chat_id]['name'] = message.text
+    bot.send_message(chat_id, "يرجى إدخال تاريخ ميلادك (المواليد):")
+    bot.register_next_step_handler(message, get_birth_date)
+
+def get_birth_date(message):
+    chat_id = message.chat.id
+    user_data[chat_id]['birth_date'] = message.text
+    
+    # اختيار الديانة
+    markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    markup.add(KeyboardButton('مسلم'), KeyboardButton('مسيحي'), KeyboardButton('أفضل عدم الإجابة'))
+    bot.send_message(chat_id, "يرجى اختيار الديانة:", reply_markup=markup)
+    bot.register_next_step_handler(message, get_religion)
+
+def get_religion(message):
+    chat_id = message.chat.id
+    user_data[chat_id]['religion'] = message.text
+    bot.send_message(chat_id, "يرجى إدخال اسم المحافظة:")
+    bot.register_next_step_handler(message, get_governorate)
+
+def get_governorate(message):
+    chat_id = message.chat.id
+    user_data[chat_id]['governorate'] = message.text
+    bot.send_message(chat_id, "يرجى إدخال اسم المنطقة:")
+    bot.register_next_step_handler(message, get_region)
+
+def get_region(message):
+    chat_id = message.chat.id
+    user_data[chat_id]['region'] = message.text
+    bot.send_message(chat_id, "يرجى إدخال اسم القرية:")
+    bot.register_next_step_handler(message, get_village)
+
+def get_village(message):
+    chat_id = message.chat.id
+    user_data[chat_id]['village'] = message.text
+    bot.send_message(chat_id, "يرجى إدخال اسم الشارع / مكان السكن بالتفصيل:")
+    bot.register_next_step_handler(message, get_street)
+
+def get_street(message):
+    chat_id = message.chat.id
+    user_data[chat_id]['street'] = message.text
+    
+    # عرض الملخص ورقم خدمة العملاء (حسابي)
+    data = user_data[chat_id]
+    summary = (
+        f"✅ **تم تسجيل بياناتك بنجاح في منصة أثر:**\n\n"
+        f"👤 الاسم: {data.get('name')}\n"
+        f"📅 المواليد: {data.get('birth_date')}\n"
+        f"☪️/✝️ الديانة: {data.get('religion')}\n"
+        f"📍 العنوان: {data.get('governorate')} - {data.get('region')} - {data.get('village')} - الشارع: {data.get('street')}\n\n"
+        f"📞 **للتواصل مع خدمة العملاء والجمعية (حسابي):**\n"
+        f"الرقم الوطني / الخط الساخن: +963-XXXXXXXXX\n\n"
+        f"شكراً لانضمامك إلينا يا أبو الجود!"
+    )
+    bot.send_message(chat_id, summary, parse_mode="Markdown")
+
+# تشغيل البوت
+bot.polling()
